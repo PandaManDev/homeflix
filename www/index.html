@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#030712">
+    <link rel="icon" type="image/svg+xml" href="/build/homeflix-icon.svg">
+    <link rel="shortcut icon" href="/build/homeflix-icon.svg">
+    <link rel="apple-touch-icon" href="/build/homeflix-icon.svg">
+    <title>HomeFlix Cyber Node</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            dark: '#030712',
+                            panel: '#0f172a',
+                            border: '#1e293b',
+                            cyan: '#06b6d4',
+                            neon: '#10b981',
+                            pink: '#ec4899',
+                            amber: '#f59e0b'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"Share Tech Mono"', 'monospace'],
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Cyberpunk CRT & Custom UI Effects */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        
+        .crt::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 99999;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            opacity: var(--crt-opacity, 0.6);
+            transition: opacity 0.3s;
+        }
+
+        .crt-off::before {
+            display: none;
+        }
+
+        .neon-glow-cyan {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 15px rgba(6, 182, 212, 0.1);
+        }
+        .neon-glow-green {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3), inset 0 0 15px rgba(16, 185, 129, 0.1);
+        }
+        .neon-glow-pink {
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.3), inset 0 0 15px rgba(236, 72, 153, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06b6d4;
+        }
+
+        .scanline-sweep {
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: rgba(6, 182, 212, 0.4);
+            opacity: 0.15;
+            pointer-events: none;
+            animation: scanlineMove 8s linear infinite;
+        }
+        @keyframes scanlineMove {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(1000%); }
+        }
+    
+        /* Netflix-inspired HomeFlix library */
+        body.netflix-skin { background:#080808; color:#f5f5f5; }
+        body.netflix-skin header { background:rgba(12,12,12,.96)!important; border-color:#292929!important; }
+        body.netflix-skin [class*="border-cyan-"] { border-color:rgba(229,9,20,.65)!important; }
+        body.netflix-skin [class*="bg-cyan-500"] { background-color:#e50914!important; color:#fff!important; }
+        body.netflix-skin [class*="text-cyan-"] { color:#f3f3f3!important; }
+        body.netflix-skin [class*="hover\\:border-cyan-"]:hover { border-color:#e50914!important; }
+        .library-card { min-width:0; background:#181818; border:1px solid rgba(255,255,255,.08); border-radius:12px; overflow:hidden; transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease; }
+        .library-card:hover { transform:translateY(-3px); border-color:rgba(229,9,20,.65); box-shadow:0 12px 28px rgba(0,0,0,.35); }
+        .library-poster { position:relative; aspect-ratio:16/10; background:linear-gradient(135deg,#262626,#101010); overflow:hidden; }
+        .library-poster img { width:100%; height:100%; object-fit:cover; display:block; }
+        .library-poster-fallback { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#525252; font-size:2rem; }
+        .library-poster-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.25); opacity:0; transition:opacity .2s; }
+        .library-card:hover .library-poster-overlay { opacity:1; }
+        .library-card-title { font-size:.9rem; font-weight:650; color:#f5f5f5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .library-card-meta { color:#a3a3a3; font-size:.72rem; margin-top:.3rem; }
+        .library-progress { height:3px; background:#404040; overflow:hidden; }
+        .library-progress span { display:block; height:100%; background:#e50914; }
+        .library-action { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; border:1px solid rgba(255,255,255,.25); color:#eee; background:rgba(0,0,0,.45); }
+        .library-action.active { background:#e50914; border-color:#e50914; color:white; }
+        #library-grid.list-mode { display:flex; flex-direction:column; }
+        #library-grid.list-mode .library-card { display:flex; align-items:center; }
+        #library-grid.list-mode .library-poster { width:150px; min-width:150px; aspect-ratio:16/9; }
+        #library-grid.list-mode .library-card-body { flex:1; min-width:0; }
+        #library-grid.list-mode .library-card-actions { padding-right:1rem; }
+        body.midnight-skin { background:#07111f; }
+        body.midnight-skin #library-dashboard { background:#0d1b2a; }
+
+    </style>
+</head>
+<body class="crt min-h-screen flex flex-col selection:bg-cyan-500 selection:text-black">
+
+    <header class="bg-cyber-panel/90 border-b border-cyber-border backdrop-blur-md sticky top-0 z-50 px-4 py-2.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-[#100809] border border-red-600/70" style="box-shadow:0 0 18px rgba(229,9,20,.22),inset 0 0 12px rgba(229,9,20,.08)" aria-label="HomeFlix Cyber Node logo">
+                <svg viewBox="0 0 48 48" width="32" height="32" role="img" aria-label="HomeFlix logo" fill="none" stroke="#ff454b" stroke-width="2.5">
+                    <path d="M9 8h30v32H9z" />
+                    <path d="M18 15v18M30 15v18M18 24h12" stroke-width="4" stroke-linecap="square" />
+                    <path d="M5 14h4M5 24h4M5 34h4M39 14h4M39 24h4M39 34h4" stroke-width="2" />
+                </svg>
+                <div class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></div>
+            </div>
+            <div>
+                <h1 class="font-orbitron font-bold text-lg tracking-wider bg-gradient-to-r from-red-400 via-red-600 to-rose-300 bg-clip-text text-transparent">
+                    HOMEFLIX <span class="text-xs font-mono text-cyan-400/80 px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-800">v4.8 CYBER NODE</span>
+                </h1>
+                <div class="flex items-center space-x-3 text-xs font-mono text-slate-400">
+                    <span><i class="fa-solid fa-microchip text-cyan-400 mr-1"></i>CPU: <span id="cpu-stat" class="text-cyan-300 font-bold">14%</span></span>
+                    <span><i class="fa-solid fa-bolt text-emerald-400 mr-1"></i>GPU: <span id="gpu-stat" class="text-emerald-300 font-bold">28%</span></span>
+                    <span class="hidden sm:inline"><i class="fa-solid fa-wifi text-pink-400 mr-1"></i>NET: <span id="net-stat" class="text-pink-300 font-bold">1.2 GB/s</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <!-- Shortcuts Modal Button -->
+            <button onclick="toggleShortcutsModal()" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-cyan-950/60 border border-slate-700 hover:border-cyan-500 text-xs font-mono text-slate-300 hover:text-cyan-300 transition flex items-center space-x-1.5" title="Keyboard Shortcuts (?)">
+                <i class="fa-regular fa-keyboard text-cyan-400"></i>
+                <span class="hidden md:inline">Hotkeys</span>
+                <kbd class="px-1.5 py-0.5 text-[10px] bg-slate-900 border border-slate-700 rounded text-cyan-400">?</kbd>
+            </button>
+
+            <!-- CRT Toggle -->
+            <button onclick="toggleCRT()" id="crt-toggle-btn" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-emerald-950/60 border border-slate-700 hover:border-emerald-500 text-xs font-mono text-slate-300 hover:text-emerald-300 transition flex items-center space-x-1.5" title="Toggle CRT Scanlines">
+                <i class="fa-solid fa-tv text-emerald-400"></i>
+                <span class="hidden md:inline">CRT FX</span>
+            </button>
+
+            <!-- Fullscreen Toggle -->
+            <button onclick="toggleAppFullscreen()" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition" title="Toggle Fullscreen (F)">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 max-w-[1800px] w-full mx-auto">
+
+        <!-- HomeFlix Netflix-style library dashboard -->
+        <section id="library-dashboard" class="lg:col-span-12 rounded-2xl overflow-hidden bg-[#111] border border-white/10 shadow-2xl">
+            <div class="relative p-5 md:p-7 bg-gradient-to-r from-[#240406] via-[#171010] to-[#111] border-b border-white/10">
+                <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5">
+                    <div>
+                        <p class="text-red-500 font-bold text-xs tracking-[.35em] uppercase mb-2">Your personal streaming space</p>
+                        <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-white">Movies &amp; Shows</h2>
+                        <p class="text-sm text-zinc-400 mt-2">Your videos, your library. Import media to build your collection.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <label class="cursor-pointer px-4 py-2.5 rounded-lg bg-[#e50914] hover:bg-red-700 text-white font-semibold text-sm transition"><i class="fa-solid fa-plus mr-2"></i>Add videos<input id="library-file-selector" type="file" class="hidden" multiple accept="video/*"></label>
+                        <label class="cursor-pointer px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 text-white font-semibold text-sm transition"><i class="fa-solid fa-folder-open mr-2"></i>Scan folder<input id="library-folder-selector" type="file" class="hidden" webkitdirectory directory multiple accept="video/*"></label>
+                        <button onclick="openLibrarySettings()" class="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 text-white text-sm transition" title="Themes and remote"><i class="fa-solid fa-sliders mr-2"></i>Settings</button>
+                    </div>
+                </div>
+                <div class="mt-6 flex flex-col lg:flex-row gap-3">
+                    <div class="relative flex-1 min-w-0"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"></i><input id="library-search" type="search" placeholder="Search your library..." class="w-full rounded-xl bg-black/50 border border-white/15 py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 outline-none focus:border-red-600"></div>
+                    <select id="library-genre" class="rounded-xl bg-[#202020] border border-white/15 px-4 py-3 text-sm text-white outline-none focus:border-red-600"><option value="all">All genres</option><option>Action</option><option>Comedy</option><option>Drama</option><option>Horror</option><option>Sci-Fi</option><option>Documentary</option><option>Animation</option><option>Other</option></select>
+                    <div class="flex rounded-xl bg-black/40 border border-white/10 p-1">
+                        <button id="grid-view-btn" onclick="setLibraryView('grid')" class="px-3 py-2 rounded-lg text-sm bg-red-600 text-white" title="Grid view"><i class="fa-solid fa-grip"></i></button>
+                        <button id="list-view-btn" onclick="setLibraryView('list')" class="px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-white" title="List view"><i class="fa-solid fa-list"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 md:p-7 space-y-8">
+                <section id="continue-section" class="hidden"><div class="flex items-center justify-between mb-4"><h3 class="text-xl font-bold text-white">Continue Watching</h3><span class="text-xs text-zinc-500">Progress saved on this device</span></div><div id="continue-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4"></div></section>
+                <section><div class="flex items-center justify-between gap-3 mb-4"><div><h3 id="library-results-title" class="text-xl font-bold text-white">Recently Added</h3><p id="library-results-meta" class="text-xs text-zinc-500 mt-1">0 videos in your library</p></div><div class="flex gap-2"><button onclick="setLibraryFilter('all')" id="filter-all-btn" class="px-3 py-2 rounded-full text-xs bg-white text-black font-semibold">All videos</button><button onclick="setLibraryFilter('favorites')" id="filter-favorites-btn" class="px-3 py-2 rounded-full text-xs bg-white/10 text-zinc-300">Favorites</button><button onclick="setLibraryFilter('watchlist')" id="filter-watchlist-btn" class="px-3 py-2 rounded-full text-xs bg-white/10 text-zinc-300">My List</button></div></div><div id="library-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4"></div><div id="library-empty" class="hidden rounded-xl border border-dashed border-white/15 p-8 text-center"><i class="fa-solid fa-film text-3xl text-zinc-600"></i><h4 class="font-semibold text-white mt-3">Your library is ready</h4><p class="text-sm text-zinc-500 mt-1">Add video files or scan a folder to create your collection.</p></div></section>
+            </div>
+        </section>
+
+        
+<div id="library-settings-modal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+            <div class="w-full max-w-lg rounded-2xl bg-[#171717] border border-white/15 p-6 shadow-2xl">
+                <div class="flex items-center justify-between mb-5"><h3 class="text-xl font-bold text-white">HomeFlix Settings</h3><button onclick="closeLibrarySettings()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+                <label class="block text-sm text-zinc-300 mb-2">Appearance</label><select id="library-theme" class="w-full rounded-lg bg-black border border-white/15 p-3 text-white mb-5"><option value="netflix">Netflix Red</option><option value="cyber">Cyber Neon</option><option value="midnight">Midnight Blue</option></select>
+                <div class="rounded-xl bg-black/30 border border-white/10 p-4 mb-5"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-red-600/20 flex items-center justify-center text-red-400"><i class="fa-solid fa-mobile-screen-button"></i></div><div class="flex-1"><h4 class="font-semibold text-white">Phone remote</h4><p class="text-xs text-zinc-500 mt-1">Remote control works in the installed desktop app when its local remote service is available.</p></div></div><p id="remote-status" class="text-sm text-zinc-400 mt-3">Checking desktop support…</p><button onclick="showRemoteInfo()" class="mt-3 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm">Remote control info</button></div>
+                <div class="rounded-xl bg-black/30 border border-white/10 p-4 mb-5">
+                    <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center text-indigo-300"><i class="fa-brands fa-discord"></i></div><div class="flex-1"><h4 class="font-semibold text-white">Discord status from the website</h4><p class="text-xs text-zinc-400 mt-1">Keep HomeFlix Cyber Node desktop app open with Discord running. Enter the pairing PIN shown in the desktop app's Settings to let this browser send the video title to Discord.</p></div></div>
+                    <label for="discord-web-pin" class="block text-xs text-zinc-400 mt-4 mb-1">Desktop pairing PIN</label>
+                    <div class="flex gap-2"><input id="discord-web-pin" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="6-digit PIN" class="min-w-0 flex-1 rounded-lg bg-black border border-white/15 p-2.5 text-white text-sm outline-none focus:border-indigo-400"><button onclick="connectDiscordWebBridge()" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold">Connect</button><button onclick="disconnectDiscordWebBridge()" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm">Disconnect</button></div>
+                    <p id="discord-web-status" role="status" class="text-xs text-zinc-400 mt-3">Not connected. Website-only Rich Presence requires the desktop companion app.</p>
+                </div>
+                <div class="flex justify-end gap-2"><button onclick="closeLibrarySettings()" class="px-4 py-2 rounded-lg bg-white/10 text-white">Cancel</button><button onclick="saveLibrarySettings()" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold">Save settings</button></div>
+            </div>
+        </div>
+
+        
+        <!-- Video Player & Telemetry Section (Col 1-8) -->
+        <div class="lg:col-span-8 flex flex-col space-y-4">
+            
+            <!-- Player Container -->
+            <div id="player-container" class="relative group bg-black rounded-xl border border-cyan-500/30 overflow-hidden shadow-2xl neon-glow-cyan aspect-video flex items-center justify-center">
+                <div class="scanline-sweep"></div>
+                
+                <!-- HTML5 Video Element -->
+                <video id="cyber-video" class="w-full h-full object-contain cursor-pointer" playsinline>
+                    Your browser does not support the video tag.
+                </video>
+
+                <!-- Subtitles Overlay Display -->
+                <div id="subtitle-display" class="absolute bottom-16 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded bg-black/80 border border-cyan-500/40 text-cyan-300 font-mono text-sm tracking-wider max-w-[80%] text-center hidden pointer-events-none z-20 shadow-lg"></div>
+
+                <!-- Center Play/Pause Large Indicator Animation -->
+                <div id="center-play-anim" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
+                    <div class="w-20 h-20 rounded-full bg-cyan-500/20 border-2 border-cyan-400 backdrop-blur-md flex items-center justify-center text-cyan-300 text-3xl shadow-2xl">
+                        <i id="center-play-icon" class="fa-solid fa-play ml-1"></i>
+                    </div>
+                </div>
+
+                <!-- Big Drop/Load Empty State Overlay -->
+                <div id="empty-state-overlay" class="absolute inset-0 bg-cyber-dark/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30">
+                    <div class="w-20 h-20 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-3xl mb-4 neon-glow-cyan animate-pulse">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                    </div>
+                    <h2 class="font-orbitron font-bold text-xl text-cyan-300 mb-2">INITIALIZE CYBER PLAYER QUEUE</h2>
+                    <p class="text-slate-400 text-sm max-w-md mb-6 font-mono">Import video files or folders, drag and drop media, or add a direct stream URL.</p>
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        <label class="px-5 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-orbitron font-semibold text-xs tracking-wider cursor-pointer shadow-lg transition flex items-center space-x-2">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <span>IMPORT FILES</span>
+                            <input type="file" id="file-selector" class="hidden" multiple accept="video/*">
+                        </label>
+                        <label class="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-emerald-500/40 text-emerald-300 font-orbitron font-semibold text-xs tracking-wider cursor-pointer transition flex items-center space-x-2">
+                            <i class="fa-solid fa-folder-tree"></i>
+                            <span>IMPORT FOLDER</span>
+                            <input type="file" id="folder-selector" class="hidden" webkitdirectory directory multiple accept="video/*">
+                        </label>
+                        </div>
+                </div>
+
+                <!-- Custom Video Controls Overlay (Appears on Hover) -->
+                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
+                    
+                    <!-- Timeline Scrubber & Hover Tooltip -->
+                    <div class="relative group/timeline mb-3">
+                        <!-- Hover Preview Tooltip -->
+                        <div id="timeline-tooltip" class="absolute bottom-5 -translate-x-1/2 px-2.5 py-1 rounded bg-slate-900 border border-cyan-500/50 text-cyan-300 font-mono text-xs pointer-events-none hidden shadow-xl z-40 whitespace-nowrap">
+                            00:00
+                        </div>
+                        
+                        <!-- Timeline Range Input -->
+                        <input type="range" id="video-progress" min="0" max="100" value="0" step="0.1" 
+                            class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:h-2.5 transition-all">
+                    </div>
+
+                    <!-- Control Buttons & Metrics Bar -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <!-- Play/Pause -->
+                            <button onclick="togglePlay()" id="play-btn" class="w-10 h-10 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400 text-cyan-300 flex items-center justify-center transition" title="Play/Pause (Space)">
+                                <i id="play-icon" class="fa-solid fa-play"></i>
+                            </button>
+
+                            <!-- Skip Backward / Forward -->
+                            <button onclick="skipTime(-10)" class="text-slate-400 hover:text-cyan-300 transition text-sm px-1" title="Rewind 10s (Left Arrow)">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                            <button onclick="skipTime(10)" class="text-slate-400 hover:text-cyan-300 transition text-sm px-1" title="Forward 10s (Right Arrow)">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+
+                            <!-- Volume & 300% Boost -->
+                            <div class="flex items-center space-x-2 group/vol relative">
+                                <button onclick="toggleMute()" id="mute-btn" class="text-slate-400 hover:text-cyan-300 transition text-sm">
+                                    <i id="mute-icon" class="fa-solid fa-volume-high"></i>
+                                </button>
+                                <input type="range" id="volume-slider" min="0" max="3" step="0.05" value="1" 
+                                    class="w-20 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                                <span id="volume-label" class="text-xs font-mono text-cyan-400 w-8">100%</span>
+                            </div>
+
+                            <!-- Time Display -->
+                            <div class="text-xs font-mono text-slate-300">
+                                <span id="current-time">00:00</span> / <span id="duration">00:00</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-3">
+                            <!-- Audio Visualizer Canvas Mini -->
+                            <canvas id="mini-visualizer" width="80" height="24" class="rounded bg-black/40 border border-cyan-500/25 hidden sm:block"></canvas>
+
+                            <!-- Playback Speed Selector -->
+                            <div class="relative">
+                                <select id="speed-select" onchange="changeSpeed(this.value)" class="bg-slate-900/90 border border-slate-700 hover:border-cyan-500 text-xs font-mono text-cyan-300 rounded px-2 py-1 outline-none cursor-pointer">
+                                    <option value="0.5">0.5x</option>
+                                    <option value="1.0" selected>1.0x</option>
+                                    <option value="1.25">1.25x</option>
+                                    <option value="1.5">1.5x</option>
+                                    <option value="2.0">2.0x</option>
+                                    <option value="3.0">3.0x</option>
+                                </select>
+                            </div>
+
+                            <!-- Subtitles Toggle -->
+                            <label class="px-2.5 py-1 rounded bg-slate-900/90 border border-slate-700 hover:border-cyan-500 text-xs font-mono text-slate-300 hover:text-cyan-300 cursor-pointer transition flex items-center space-x-1.5" title="Upload Custom Subtitles (.vtt / .srt)">
+                                <i class="fa-solid fa-closed-captioning"></i>
+                                <span class="hidden md:inline">Subtitles</span>
+                                <input type="file" id="sub-selector" class="hidden" accept=".vtt,.srt">
+                            </label>
+
+                            <!-- Fullscreen -->
+                            <button onclick="toggleFullscreen()" class="text-slate-400 hover:text-white transition text-sm" title="Fullscreen (F)">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Now Playing Meta & Audio Visualizer Full Panel -->
+            <div class="bg-cyber-panel rounded-xl border border-cyber-border p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 w-full sm:w-auto">
+                    <div class="w-12 h-12 rounded-lg bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-xl shrink-0 neon-glow-cyan">
+                        <i id="current-stream-icon" class="fa-solid fa-compact-disc animate-spin" style="animation-duration: 6s;"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <h3 id="current-title" class="font-orbitron font-bold text-sm text-cyan-300 truncate">No Active Node Stream</h3>
+                        <p id="current-meta" class="font-mono text-xs text-slate-400 truncate">Ready for queue ingestion...</p>
+                    </div>
+                </div>
+
+                <!-- Audio Visualizer Full -->
+                <div class="w-full sm:w-64 h-12 bg-black/60 border border-cyan-500/30 rounded-lg overflow-hidden relative flex items-center px-2">
+                    <div class="absolute top-1 left-2 text-[9px] font-mono text-cyan-400/70 tracking-widest pointer-events-none">AUDIO SPECTRUM ANALYZER</div>
+                    <canvas id="audio-visualizer-canvas" class="w-full h-8"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Playlist Queue Panel (Col 9-12) -->
+        <div class="lg:col-span-4 flex flex-col bg-cyber-panel rounded-xl border border-cyber-border overflow-hidden h-[600px] lg:h-auto">
+            
+            <!-- Playlist Header -->
+            <div class="p-4 border-b border-cyber-border flex items-center justify-between bg-black/40">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-list-ul text-cyan-400"></i>
+                    <h2 class="font-orbitron font-bold text-sm tracking-wide text-cyan-300">PLAYLIST QUEUE</h2>
+                    <span id="queue-count" class="px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-[10px] font-mono text-cyan-300">0</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <!-- Add URL Button -->
+                    <button onclick="promptAddURL()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-500 text-xs font-mono text-slate-300 hover:text-cyan-300 transition" title="Add Video URL">
+                        <i class="fa-solid fa-link mr-1"></i>URL
+                    </button>
+                    <!-- Clear Queue -->
+                    <button onclick="clearQueue()" class="px-2 py-1 rounded bg-slate-800 hover:bg-red-950 border border-slate-700 hover:border-red-500 text-xs font-mono text-slate-400 hover:text-red-300 transition" title="Clear Queue">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Drag & Drop Dropzone Header inside Playlist -->
+            <div id="playlist-dropzone" class="p-3 bg-cyan-950/20 border-b border-cyan-500/20 text-center text-xs font-mono text-cyan-400/80 flex items-center justify-center space-x-2 transition hover:bg-cyan-950/40 cursor-pointer">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Drop video files here or click to add</span>
+                <input type="file" id="playlist-file-input" class="hidden" multiple accept="video/*">
+            </div>
+
+            <!-- Playlist Items Container -->
+            <div id="playlist-items" class="flex-1 overflow-y-auto p-3 space-y-2">
+                <!-- Dynamically populated playlist items -->
+                <div class="text-center py-12 text-slate-500 font-mono text-xs">
+                    <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-600"></i>
+                    <p>Queue is empty.<br>Import media or add a stream URL to begin.</p>
+                </div>
+            </div>
+
+            <!-- Playlist Footer Control -->
+            <div class="p-3 border-t border-cyber-border bg-black/40 flex items-center justify-between text-xs font-mono text-slate-400">
+                <span id="queue-duration-total">Total: 00:00</span>
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleLoop()" id="loop-btn" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-cyan-300 transition" title="Toggle Loop Queue">
+                        <i class="fa-solid fa-repeat"></i> Loop
+                    </button>
+                    <button onclick="playNext()" class="px-3 py-1 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-semibold transition" title="Next Item">
+                        Next <i class="fa-solid fa-forward-step ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Keyboard Shortcuts Cheat Sheet Modal -->
+    <div id="shortcuts-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-cyber-panel border border-cyan-500/50 rounded-2xl max-w-lg w-full p-6 neon-glow-cyan shadow-2xl relative">
+            <button onclick="toggleShortcutsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-cyan-300 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-10 h-10 rounded-lg bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-lg">
+                    <i class="fa-regular fa-keyboard"></i>
+                </div>
+                <div>
+                    <h3 class="font-orbitron font-bold text-lg text-cyan-300">DESKTOP KEYBOARD HOTKEYS</h3>
+                    <p class="font-mono text-xs text-slate-400">Master your cyber playback node</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 font-mono text-xs mb-6">
+                <div class="flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Play / Pause</span>
+                    <kbd class="px-2 py-1 bg-black border border-cyan-500/40 rounded text-cyan-400">Space</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Fullscreen</span>
+                    <kbd class="px-2 py-1 bg-black border border-cyan-500/40 rounded text-cyan-400">F</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Mute / Unmute</span>
+                    <kbd class="px-2 py-1 bg-black border border-cyan-500/40 rounded text-cyan-400">M</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Shortcuts Help</span>
+                    <kbd class="px-2 py-1 bg-black border border-cyan-500/40 rounded text-cyan-400">?</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Seek Forward 10s</span>
+                    <kbd class="px-2 py-1 bg-black border border-cyan-500/40 rounded text-cyan-400">Right Arrow</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Seek Backward 10s</span>
+                    <kbd class="px-2 py-1 bg-black border border-cyan-500/40 rounded text-cyan-400">Left Arrow</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Volume Up</span>
+                    <kbd class="px-2 py-1 bg-black border border-cyan-500/40 rounded text-cyan-400">Up Arrow</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Volume Down</span>
+                    <kbd class="px-2 py-1 bg-black border border-cyan-500/40 rounded text-cyan-400">Down Arrow</kbd>
+                </div>
+            </div>
+
+            <button onclick="toggleShortcutsModal()" class="w-full py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-orbitron font-semibold text-xs tracking-wider transition">
+                CLOSE HOTKEYS
+            </button>
+        </div>
+    </div>
+
+    <!-- URL Input Modal -->
+    <div id="url-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-cyber-panel border border-cyan-500/50 rounded-2xl max-w-md w-full p-6 neon-glow-cyan shadow-2xl relative">
+            <button onclick="closeUrlModal()" class="absolute top-4 right-4 text-slate-400 hover:text-cyan-300 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-10 h-10 rounded-lg bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-lg">
+                    <i class="fa-solid fa-link"></i>
+                </div>
+                <div>
+                    <h3 class="font-orbitron font-bold text-lg text-cyan-300">ADD STREAM URL</h3>
+                    <p class="font-mono text-xs text-slate-400">Ingest direct video stream link</p>
+                </div>
+            </div>
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs font-mono text-slate-400 mb-1">Stream Title</label>
+                    <input type="text" id="url-title-input" placeholder="e.g. Cyber Matrix Stream" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 text-sm font-mono text-white outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-slate-400 mb-1">Direct Video URL (.mp4, .webm, .m3u8)</label>
+                    <input type="text" id="url-source-input" placeholder="https://example.com/video.mp4" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 focus:border-cyan-500 text-sm font-mono text-white outline-none">
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeUrlModal()" class="flex-1 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-orbitron font-semibold text-xs transition">
+                    CANCEL
+                </button>
+                <button onclick="confirmAddURL()" class="flex-1 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-orbitron font-semibold text-xs tracking-wider transition">
+                    INGEST STREAM
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="cyber-toast" class="fixed bottom-6 right-6 px-4 py-3 rounded-xl bg-slate-900/95 border border-cyan-500 text-cyan-300 font-mono text-xs shadow-2xl backdrop-blur-md transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center space-x-2">
+        <i class="fa-solid fa-triangle-exclamation text-cyan-400"></i>
+        <span id="toast-message">Notification message</span>
+    </div>
+
+    <script>
+
+        const LIBRARY_STORAGE_KEY = 'homeflix-library-v1';
+        function loadLibraryMetadata() {
+            try { return JSON.parse(localStorage.getItem('homeflix-library-v1') || '{}'); } catch (_) { return {}; }
+        }
+        function libraryKey(item) { return item.id || (item.type === 'url' ? item.url : item.title + '|' + (item.size || '')); }
+        function persistLibrary() {
+            const data = {};
+            state.playlist.forEach(item => {
+                const key = libraryKey(item);
+                data[key] = { title:item.title, url:item.type === 'url' ? item.url : '', type:item.type, size:item.size || '', thumbnail:item.type === 'url' ? (item.thumbnail || '') : '', genre:item.genre || inferGenre(item.title), addedAt:item.addedAt || Date.now(), duration:item.duration || 0, progress:item.progress || 0, favorite:!!item.favorite, watchlist:!!item.watchlist };
+            });
+            // Retain prior progress for local files even though browser security requires re-importing the files after reload.
+            Object.keys(state.savedLibrary || {}).forEach(k => { if (!data[k]) data[k]=state.savedLibrary[k]; });
+            state.savedLibrary=data;
+            try { localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(data)); } catch (e) { showToast('Library storage is full. Some covers may not be saved.'); }
+        }
+        function inferGenre(title) {
+            const t=(title||'').toLowerCase();
+            if (/horror|scary|haunt|ghost|zombie|nightmare/.test(t)) return 'Horror';
+            if (/comedy|funny|laugh/.test(t)) return 'Comedy';
+            if (/documentary|behind.the.scenes|making.of/.test(t)) return 'Documentary';
+            if (/anime|animation|cartoon/.test(t)) return 'Animation';
+            if (/sci.?fi|space|alien|robot|future|cyber/.test(t)) return 'Sci-Fi';
+            if (/action|fight|war|battle|mission/.test(t)) return 'Action';
+            if (/drama|story|life/.test(t)) return 'Drama';
+            return 'Other';
+        }
+        function escapeLibraryText(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        function syncLibraryMetadata(item) {
+            if (!item) return;
+            const saved=state.savedLibrary[libraryKey(item)] || {};
+            item.genre=item.genre || saved.genre || inferGenre(item.title);
+            item.addedAt=item.addedAt || saved.addedAt || Date.now();
+            item.duration=item.duration || saved.duration || 0;
+            if (!item.duration) item.duration=saved.duration || 0;
+            if (!item.progress) item.progress=saved.progress || 0;
+            if (!item.favorite) item.favorite=!!saved.favorite;
+            if (!item.watchlist) item.watchlist=!!saved.watchlist;
+            if (!item.thumbnail && saved.thumbnail) item.thumbnail=saved.thumbnail;
+        }
+        function setLibraryView(view) {
+            state.libraryView=view;
+            document.getElementById('grid-view-btn').className='px-3 py-2 rounded-lg text-sm '+(view==='grid'?'bg-red-600 text-white':'text-zinc-400 hover:text-white');
+            document.getElementById('list-view-btn').className='px-3 py-2 rounded-lg text-sm '+(view==='list'?'bg-red-600 text-white':'text-zinc-400 hover:text-white');
+            renderLibrary();
+        }
+        function setLibraryFilter(filter) {
+            state.libraryFilter=filter;
+            for (const [id,value] of [['filter-all-btn','all'],['filter-favorites-btn','favorites'],['filter-watchlist-btn','watchlist']]) {
+                const el=document.getElementById(id);
+                el.className='px-3 py-2 rounded-full text-xs '+(filter===value?'bg-white text-black font-semibold':'bg-white/10 text-zinc-300');
+            }
+            renderLibrary();
+        }
+        function applyLibraryTheme(theme) {
+            document.body.classList.remove('netflix-skin','cyber-skin','midnight-skin');
+            if (theme==='cyber') { document.body.classList.add('cyber-skin'); document.body.classList.remove('crt-off'); }
+            else if (theme==='midnight') document.body.classList.add('midnight-skin');
+            else document.body.classList.add('netflix-skin');
+        }
+
+        let discordProfileRefreshTimer = null;
+        function openLibrarySettings() {
+            document.getElementById('library-theme').value=state.libraryTheme;
+            document.getElementById('library-settings-modal').classList.remove('hidden');
+            document.getElementById('library-settings-modal').classList.add('flex');
+        }
+        function closeLibrarySettings() {
+            document.getElementById('library-settings-modal').classList.add('hidden');
+            document.getElementById('library-settings-modal').classList.remove('flex');
+        }
+        function saveLibrarySettings() {
+            state.libraryTheme=document.getElementById('library-theme').value;
+            localStorage.setItem('homeflix-theme',state.libraryTheme);
+            applyLibraryTheme(state.libraryTheme);
+            closeLibrarySettings();
+            showToast('Appearance settings saved.');
+        }
+        function showRemoteInfo() {
+            const msg=window.homeflixDesktop ? 'Use the remote address shown by the HomeFlix desktop app and enter its pairing PIN on your phone. Keep both devices on the same trusted Wi-Fi.' : 'Install and open the Windows desktop build to enable a phone remote on your local Wi-Fi. The hosted website alone cannot accept incoming phone commands.';
+            showToast(msg);
+        }
+        function toggleLibraryFlag(index, flag) {
+            const item=state.playlist[index]; if (!item) return;
+            item[flag]=!item[flag]; persistLibrary(); renderLibrary(); renderPlaylist();
+            showToast(item[flag] ? (flag==='favorite'?'Added to Favorites':'Added to My List') : (flag==='favorite'?'Removed from Favorites':'Removed from My List'));
+        }
+        function libraryCard(item, index, compact=false) {
+            const title=escapeLibraryText(item.title);
+            const genre=escapeLibraryText(item.genre || inferGenre(item.title));
+            const duration=item.duration ? formatTime(item.duration) : (item.size || 'Video');
+            const progress=Math.max(0,Math.min(100,item.duration ? (item.progress/item.duration)*100 : 0));
+            const cover=item.thumbnail ? '<img src="'+item.thumbnail+'" alt="" loading="lazy">' : '<div class="library-poster-fallback"><i class="fa-solid fa-film"></i></div>';
+            return '<article class="library-card '+(state.libraryView==='list'&&!compact?'flex items-center':'')+'">'+
+                '<div class="library-poster" onclick="selectQueueItem('+index+')" role="button" tabindex="0" aria-label="Play '+title+'">'+cover+'<div class="library-poster-overlay"><button class="w-12 h-12 rounded-full bg-red-600 text-white shadow-lg" onclick="event.stopPropagation();selectQueueItem('+index+')"><i class="fa-solid fa-play"></i></button></div></div>'+
+                '<div class="library-card-body p-3 flex-1 min-w-0"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><h4 class="library-card-title" title="'+title+'">'+title+'</h4><p class="library-card-meta">'+genre+' · '+escapeLibraryText(duration)+'</p></div><div class="flex gap-1 shrink-0"><button class="library-action '+(item.favorite?'active':'')+'" onclick="toggleLibraryFlag('+index+',\'favorite\')" title="Favorite"><i class="fa-solid fa-heart text-xs"></i></button><button class="library-action '+(item.watchlist?'active':'')+'" onclick="toggleLibraryFlag('+index+',\'watchlist\')" title="Add to My List"><i class="fa-solid fa-bookmark text-xs"></i></button></div></div>'+
+                (item.duration ? '<div class="library-progress mt-3"><span style="width:'+progress+'%"></span></div>' : '')+'</div></article>';
+        }
+        function renderLibrary() {
+            if (!document.getElementById('library-grid')) return;
+            state.playlist.forEach(syncLibraryMetadata);
+            const query=state.librarySearch || '';
+            const matches=state.playlist.map((item,index)=>({item,index})).filter(({item})=>{
+                const text=(item.title+' '+(item.genre||'')+' '+(item.type||'')).toLowerCase();
+                return (!query || text.includes(query)) && (state.libraryGenre==='all' || (item.genre||inferGenre(item.title))===state.libraryGenre) && (state.libraryFilter==='all' || (state.libraryFilter==='favorites'?item.favorite:item.watchlist));
+            }).sort((a,b)=>(b.item.addedAt||0)-(a.item.addedAt||0));
+            const recent=matches;
+            const grid=document.getElementById('library-grid');
+            grid.classList.toggle('list-mode',state.libraryView==='list');
+            grid.className=(state.libraryView==='list'?'list-mode flex flex-col gap-3':'grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4');
+            grid.innerHTML=recent.map(({item,index})=>libraryCard(item,index)).join('');
+            document.getElementById('library-results-title').textContent=state.libraryFilter==='favorites'?'Favorites':state.libraryFilter==='watchlist'?'My List':'Recently Added';
+            document.getElementById('library-results-meta').textContent=matches.length+' video'+(matches.length===1?'':'s')+' · sorted by recently added';
+            document.getElementById('library-empty').classList.toggle('hidden',matches.length>0);
+            const continuing=state.playlist.map((item,index)=>({item,index})).filter(x=>x.item.progress>0 && x.item.duration && x.item.progress<x.item.duration-20).sort((a,b)=>(b.item.progress/b.item.duration)-(a.item.progress/a.item.duration)).slice(0,5);
+            const section=document.getElementById('continue-section');
+            section.classList.toggle('hidden',continuing.length===0);
+            document.getElementById('continue-grid').innerHTML=continuing.map(({item,index})=>libraryCard(item,index,true)).join('');
+            persistLibrary();
+        }
+
+        // Global Application State
+        const state = {
+            playlist: [],
+            currentIndex: 0,
+            isPlaying: false,
+            isLooping: false,
+            isCRTActive: true,
+            subtitles: [],
+            audioContext: null,
+            audioSource: null,
+            gainNode: null,
+            analyser: null,
+            visualizerAnimationFrame: null,
+            libraryFilter: 'all',
+            libraryView: 'grid',
+            librarySearch: '',
+            libraryGenre: 'all',
+            libraryTheme: localStorage.getItem('homeflix-theme') || 'netflix',
+            savedLibrary: loadLibraryMetadata()
+        };
+
+        // DOM Elements
+        const video = document.getElementById('cyber-video');
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = document.getElementById('play-icon');
+        const centerPlayAnim = document.getElementById('center-play-anim');
+        const centerPlayIcon = document.getElementById('center-play-icon');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeLabel = document.getElementById('volume-label');
+        const muteBtn = document.getElementById('mute-btn');
+        const muteIcon = document.getElementById('mute-icon');
+        const videoProgress = document.getElementById('video-progress');
+        const timelineTooltip = document.getElementById('timeline-tooltip');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const emptyStateOverlay = document.getElementById('empty-state-overlay');
+        const currentTitleEl = document.getElementById('current-title');
+        const currentMetaEl = document.getElementById('current-meta');
+        const subtitleDisplay = document.getElementById('subtitle-display');
+        const queueCountEl = document.getElementById('queue-count');
+        const queueDurationTotalEl = document.getElementById('queue-duration-total');
+        const playlistItemsEl = document.getElementById('playlist-items');
+
+        const savedDiscordWebPin = localStorage.getItem('homeflix-discord-web-pin') || '';
+        const discordPinInput = document.getElementById('discord-web-pin');
+        if (discordPinInput) discordPinInput.value = savedDiscordWebPin;
+        if (savedDiscordWebPin && !window.homeflixDesktop) setDiscordWebStatus('Saved pairing PIN. Checking the desktop bridge when playback starts.');
+
+        // Initialize Web Audio API for 300% Boost & Visualizer
+        function initAudioEngine() {
+            if (state.audioContext) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                state.audioContext = new AudioContext();
+                state.audioSource = state.audioContext.createMediaElementSource(video);
+                state.gainNode = state.audioContext.createGain();
+                state.analyser = state.audioContext.createAnalyser();
+                state.analyser.fftSize = 64;
+
+                // Connect graph: source -> gain (volume/boost) -> analyser -> destination
+                state.audioSource.connect(state.gainNode);
+                state.gainNode.connect(state.analyser);
+                state.analyser.connect(state.audioContext.destination);
+
+                // Set initial gain
+                state.gainNode.gain.value = parseFloat(volumeSlider.value);
+            } catch (e) {
+                console.warn('Web Audio API initialization note:', e);
+            }
+        }
+
+        // File Selector & Drag and Drop Setup
+        const fileSelector = document.getElementById('file-selector');
+        const playlistFileInput = document.getElementById('playlist-file-input');
+        const folderSelector = document.getElementById('folder-selector');
+        const playlistDropzone = document.getElementById('playlist-dropzone');
+
+        fileSelector.addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+        playlistFileInput.addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+        folderSelector.addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+        playlistDropzone.addEventListener('click', () => playlistFileInput.click());
+
+        // Global Drag and Drop over player container
+        const playerContainer = document.getElementById('player-container');
+        playerContainer.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); });
+        playerContainer.addEventListener('drop', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+
+        playlistDropzone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); });
+        playlistDropzone.addEventListener('drop', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+
+        function handleFiles(files) {
+            let addedCount = 0;
+            for (const file of files) {
+                if (file.type.startsWith('video/')) {
+                    const blobUrl = URL.createObjectURL(file);
+                    const item = {
+                        title: file.name,
+                        url: blobUrl,
+                        type: 'local',
+                        size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+                        thumbnail: '',
+                        id: 'local-' + file.name + '-' + file.size + '-' + file.lastModified,
+                        genre: inferGenre(file.name),
+                        addedAt: Date.now(),
+                        duration: 0,
+                        progress: 0,
+                        favorite: false,
+                        watchlist: false
+                    };
+                    syncLibraryMetadata(item);
+                    state.playlist.push(item);
+                    addedCount++;
+                    generateVideoThumbnail(item);
+                }
+            }
+            if (addedCount > 0) {
+                renderPlaylist();
+                renderLibrary();
+                showToast(`Added ${addedCount} video file(s) to your library.`);
+                if (state.playlist.length === addedCount) {
+                    selectQueueItem(0);
+                }
+            } else {
+                showToast('No valid video files detected.');
+            }
+        }
+
+        // Grab a frame from the video and use it as playlist cover art.
+        // Local files work reliably; remote URLs may block canvas access via CORS.
+        function generateVideoThumbnail(item) {
+            if (!item || !item.url || item.thumbnail) return;
+            const preview = document.createElement('video');
+            preview.preload = 'metadata';
+            preview.muted = true;
+            preview.playsInline = true;
+            let finished = false;
+            const cleanup = () => {
+                preview.removeAttribute('src');
+                preview.load();
+            };
+            const fail = () => {
+                if (finished) return;
+                finished = true;
+                cleanup();
+            };
+            preview.addEventListener('error', fail, { once: true });
+            preview.addEventListener('loadedmetadata', () => {
+                try {
+                    const target = Number.isFinite(preview.duration) && preview.duration > 1
+                        ? Math.min(1, preview.duration / 2)
+                        : 0;
+                    if (target === 0) {
+                        captureFrame();
+                    } else {
+                        preview.addEventListener('seeked', captureFrame, { once: true });
+                        preview.currentTime = target;
+                    }
+                } catch (_) {
+                    fail();
+                }
+            }, { once: true });
+            function captureFrame() {
+                if (finished) return;
+                try {
+                    if (!preview.videoWidth || !preview.videoHeight) return fail();
+                    const canvas = document.createElement('canvas');
+                    const maxWidth = 320;
+                    const scale = Math.min(1, maxWidth / preview.videoWidth);
+                    canvas.width = Math.max(1, Math.round(preview.videoWidth * scale));
+                    canvas.height = Math.max(1, Math.round(preview.videoHeight * scale));
+                    canvas.getContext('2d').drawImage(preview, 0, 0, canvas.width, canvas.height);
+                    item.thumbnail = canvas.toDataURL('image/jpeg', 0.78);
+                    finished = true;
+                    cleanup();
+                    renderPlaylist();
+                } catch (_) {
+                    // A remote host without permissive CORS cannot be used to extract a frame.
+                    fail();
+                }
+            }
+            preview.src = item.url;
+            preview.load();
+        }
+
+        function renderPlaylist() {
+            queueCountEl.textContent = state.playlist.length;
+            if (state.playlist.length === 0) {
+                playlistItemsEl.innerHTML = `
+                    <div class="text-center py-12 text-slate-500 font-mono text-xs">
+                        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-600"></i>
+                        <p>Queue is empty.<br>Import media or add a stream URL to begin.</p>
+                    </div>
+                `;
+                emptyStateOverlay.classList.remove('hidden');
+                return;
+            }
+
+            let html = '';
+            state.playlist.forEach((item, index) => {
+                const isActive = index === state.currentIndex;
+                html += `
+                    <div onclick="selectQueueItem(${index})" class="group/item flex items-center justify-between p-3 rounded-lg border transition cursor-pointer ${isActive ? 'bg-cyan-950/40 border-cyan-500/60 neon-glow-cyan' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900'}">
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            <div class="w-12 h-9 rounded bg-black/60 border ${isActive ? 'border-cyan-400' : 'border-slate-700'} overflow-hidden flex items-center justify-center shrink-0">
+                                ${item.thumbnail
+                                    ? `<img src="${item.thumbnail}" alt="" class="w-full h-full object-cover" loading="lazy">`
+                                    : `<span class="font-mono text-xs ${isActive ? 'text-cyan-300' : 'text-slate-400'}">${isActive ? '<i class="fa-solid fa-play text-[10px]"></i>' : (index + 1)}</span>`}
+                            </div>
+                            <div class="overflow-hidden">
+                                <h4 class="font-orbitron font-semibold text-xs ${isActive ? 'text-cyan-300' : 'text-slate-200'} truncate">${item.title}</h4>
+                                <span class="font-mono text-[10px] text-slate-400">${item.size || 'Remote Stream'}</span>
+                            </div>
+                        </div>
+                        <button onclick="event.stopPropagation(); removeFromQueue(${index})" class="text-slate-500 hover:text-red-400 p-1.5 opacity-0 group-hover/item:opacity-100 transition" title="Remove">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            playlistItemsEl.innerHTML = html;
+        }
+
+        function selectQueueItem(index) {
+            if (index < 0 || index >= state.playlist.length) return;
+            state.currentIndex = index;
+            const item = state.playlist[index];
+            syncLibraryMetadata(item);
+            
+            video.src = item.url;
+            video.load();
+            syncDiscordPresence();
+            currentTitleEl.textContent = item.title;
+            currentMetaEl.textContent = `Node Source: ${item.type.toUpperCase()} | Index #${index + 1}`;
+            
+            emptyStateOverlay.classList.add('hidden');
+            renderPlaylist();
+            renderLibrary();
+            
+            // Resume audio context if suspended
+            if (state.audioContext && state.audioContext.state === 'suspended') {
+                state.audioContext.resume();
+            }
+
+            video.play().then(() => {
+                state.isPlaying = true;
+                updatePlayIcons();
+            }).catch(err => {
+                console.warn('Autoplay prevented:', err);
+                state.isPlaying = false;
+                updatePlayIcons();
+            });
+        }
+
+        function releaseLocalUrl(item) {
+            if (item && typeof item.url === 'string' && item.url.startsWith('blob:')) URL.revokeObjectURL(item.url);
+        }
+
+        function removeFromQueue(index) {
+            const removedItem = state.playlist[index];
+            releaseLocalUrl(removedItem);
+            state.playlist.splice(index, 1);
+            if (index < state.currentIndex) state.currentIndex--;
+            if (state.currentIndex >= state.playlist.length) {
+                state.currentIndex = Math.max(0, state.playlist.length - 1);
+            }
+            renderPlaylist();
+            if (state.playlist.length === 0) {
+                video.pause();
+                video.src = '';
+                currentTitleEl.textContent = 'No Active Node Stream';
+                currentMetaEl.textContent = 'Ready for queue ingestion...';
+                state.isPlaying = false;
+                updatePlayIcons();
+            } else if (state.currentIndex === index || video.src === '') {
+                selectQueueItem(state.currentIndex);
+            }
+        }
+
+        function clearQueue() {
+            state.playlist.forEach(releaseLocalUrl);
+            state.playlist = [];
+            state.currentIndex = 0;
+            video.pause();
+            video.src = '';
+            syncDiscordPresence(true);
+            currentTitleEl.textContent = 'No Active Node Stream';
+            currentMetaEl.textContent = 'Ready for queue ingestion...';
+            state.isPlaying = false;
+            updatePlayIcons();
+            renderPlaylist();
+            showToast('Queue cleared.');
+        }
+
+        function playNext() {
+            if (state.playlist.length === 0) return;
+            let nextIdx = state.currentIndex + 1;
+            if (nextIdx >= state.playlist.length) {
+                if (state.isLooping) {
+                    nextIdx = 0;
+                } else {
+                    showToast('Reached end of playlist queue.');
+                    return;
+                }
+            }
+            selectQueueItem(nextIdx);
+        }
+
+        // URL Modal helpers
+        const urlModal = document.getElementById('url-modal');
+        function promptAddURL() { urlModal.classList.remove('hidden'); }
+        function closeUrlModal() { urlModal.classList.add('hidden'); }
+        function confirmAddURL() {
+            const titleInput = document.getElementById('url-title-input').value.trim();
+            const sourceInput = document.getElementById('url-source-input').value.trim();
+            if (!sourceInput) {
+                showToast('Please enter a valid video stream URL.');
+                return;
+            }
+            const urlItem = {
+                title: titleInput || 'External Cyber Stream',
+                url: sourceInput,
+                type: 'url',
+                size: 'Stream',
+                thumbnail: '',
+                id: 'url-' + sourceInput,
+                genre: inferGenre(titleInput || sourceInput),
+                addedAt: Date.now(), duration: 0, progress: 0, favorite: false, watchlist: false
+            };
+            syncLibraryMetadata(urlItem);
+            state.playlist.push(urlItem);
+            generateVideoThumbnail(urlItem);
+            renderLibrary();
+            document.getElementById('url-title-input').value = '';
+            document.getElementById('url-source-input').value = '';
+            closeUrlModal();
+            renderPlaylist();
+            showToast('Stream URL added to queue.');
+            if (state.playlist.length === 1) {
+                selectQueueItem(0);
+            }
+        }
+
+        // Video Controls & Timeline Scrubbing
+        const DISCORD_WEB_BRIDGE_URL = 'http://127.0.0.1:47831/api/discord-presence';
+        let lastWebDiscordSentAt = 0;
+        let lastWebDiscordKey = '';
+        function setDiscordWebStatus(message, connected = false) {
+            const el = document.getElementById('discord-web-status');
+            if (el) { el.textContent = message; el.className = 'text-xs mt-3 ' + (connected ? 'text-emerald-300' : 'text-zinc-400'); }
+        }
+        async function connectDiscordWebBridge() {
+            const pin = document.getElementById('discord-web-pin').value.trim();
+            if (!/^\d{6}$/.test(pin)) { setDiscordWebStatus('Enter the 6-digit PIN shown in desktop Settings.'); return; }
+            try {
+                const response = await fetch(DISCORD_WEB_BRIDGE_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'ping', pin })
+                });
+                if (!response.ok) throw new Error(response.status === 401 ? 'PIN not accepted. Check the desktop app PIN.' : 'Desktop bridge is unavailable.');
+                localStorage.setItem('homeflix-discord-web-pin', pin);
+                setDiscordWebStatus('Connected to the desktop bridge. Play a video to update Discord.', true);
+                lastWebDiscordKey = '';
+                syncDiscordPresence();
+            } catch (error) {
+                setDiscordWebStatus('Could not connect. Keep the desktop app open, allow local-network access if prompted, and try again. ' + error.message);
+            }
+        }
+        function disconnectDiscordWebBridge() {
+            localStorage.removeItem('homeflix-discord-web-pin');
+            lastWebDiscordKey = '';
+            setDiscordWebStatus('Disconnected. The website will no longer send playback updates.');
+        }
+        async function sendWebDiscordPresence(presence, force = false) {
+            const pin = localStorage.getItem('homeflix-discord-web-pin');
+            if (!pin) return;
+            const key = presence.clear ? 'clear' : [presence.title, presence.playing, Math.floor((presence.currentTime || 0) / 15), Math.floor(presence.duration || 0)].join('|');
+            const now = Date.now();
+            if (!force && key === lastWebDiscordKey && now - lastWebDiscordSentAt < 12000) return;
+            if (!force && now - lastWebDiscordSentAt < 12000 && key !== 'clear') return;
+            lastWebDiscordKey = key;
+            lastWebDiscordSentAt = now;
+            try {
+                const response = await fetch(DISCORD_WEB_BRIDGE_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin, presence })
+                });
+                if (response.status === 401) {
+                    localStorage.removeItem('homeflix-discord-web-pin');
+                    setDiscordWebStatus('Connection expired or PIN changed. Connect again.');
+                } else if (!response.ok) setDiscordWebStatus('Desktop bridge did not accept the playback update.');
+                else setDiscordWebStatus('Connected — Discord status follows the video playing in this browser.', true);
+            } catch (_) {
+                setDiscordWebStatus('Desktop app is offline or browser local-network access is blocked. Reconnect when it is running.');
+            }
+        }
+        function syncDiscordPresence(clear = false) {
+            const item = state.playlist[state.currentIndex];
+            const presence = clear || state.playlist.length === 0 || !video.currentSrc
+                ? { clear: true }
+                : {
+                    title: item?.title || currentTitleEl.textContent || 'HomeFlix',
+                    playing: !video.paused && !video.ended,
+                    currentTime: Number.isFinite(video.currentTime) ? video.currentTime : 0,
+                    duration: Number.isFinite(video.duration) ? video.duration : 0
+                };
+            if (window.homeflixDesktop && typeof window.homeflixDesktop.sendDiscordPresence === 'function') {
+                window.homeflixDesktop.sendDiscordPresence(presence);
+            } else {
+                sendWebDiscordPresence(presence, clear);
+            }
+        }
+
+        video.addEventListener('click', togglePlay);
+        video.addEventListener('play', () => { state.isPlaying = true; updatePlayIcons(); syncDiscordPresence(); });
+        video.addEventListener('pause', () => { state.isPlaying = false; updatePlayIcons(); syncDiscordPresence(); });
+        video.addEventListener('ended', () => { syncDiscordPresence(true); playNext(); });
+
+        let lastProgressSave = 0;
+        video.addEventListener('timeupdate', () => {
+            syncDiscordPresence();
+            if (!isNaN(video.duration)) {
+                const activeItem = state.playlist[state.currentIndex];
+                if (activeItem) {
+                    activeItem.progress=video.currentTime; activeItem.duration=video.duration;
+                    if (Date.now() - lastProgressSave > 5000) { lastProgressSave=Date.now(); persistLibrary(); renderLibrary(); }
+                }
+
+                const percent = (video.currentTime / video.duration) * 100;
+                videoProgress.value = percent;
+                currentTimeEl.textContent = formatTime(video.currentTime);
+                durationEl.textContent = formatTime(video.duration);
+                checkSubtitles(video.currentTime);
+            }
+        });
+
+        video.addEventListener('loadedmetadata', () => {
+            syncDiscordPresence();
+            durationEl.textContent = formatTime(video.duration);
+            const activeItem=state.playlist[state.currentIndex];
+            if(activeItem){ activeItem.duration=video.duration; if(activeItem.progress>5 && activeItem.progress<video.duration-10){ const resumeAt=activeItem.progress; video.currentTime=resumeAt; showToast('Resuming from '+formatTime(resumeAt)); } persistLibrary(); renderLibrary(); }
+        });
+
+        video.addEventListener('error', () => {
+            if (!video.currentSrc) return;
+            const code = video.error ? video.error.code : 0;
+            const reason = code === 2
+                ? 'Network error while loading this video. Check the connection or try another source.'
+                : code === 3
+                    ? 'The browser received the video but could not decode it. Try a different MP4 or WebM file.'
+                    : code === 4
+                        ? 'The video source was rejected. This can happen when a remote host blocks cross-origin media or the codec is unsupported. Try a local MP4 (H.264/AAC).'
+                        : 'The video could not be loaded. Check the file or stream URL.';
+            state.isPlaying = false;
+            updatePlayIcons();
+            showToast(reason);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            state.playlist.forEach(releaseLocalUrl);
+        });
+
+        videoProgress.addEventListener('input', (e) => {
+            if (!isNaN(video.duration)) {
+                const time = (e.target.value / 100) * video.duration;
+                video.currentTime = time;
+            }
+        });
+
+        // Timeline Hover Preview Tooltip calculation
+        videoProgress.addEventListener('mousemove', (e) => {
+            if (isNaN(video.duration)) return;
+            const rect = videoProgress.getBoundingClientRect();
+            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const hoverTime = pos * video.duration;
+            
+            timelineTooltip.style.left = `${e.clientX - rect.left}px`;
+            timelineTooltip.textContent = formatTime(hoverTime);
+            timelineTooltip.classList.remove('hidden');
+        });
+
+        videoProgress.addEventListener('mouseleave', () => {
+            timelineTooltip.classList.add('hidden');
+        });
+
+        function togglePlay() {
+            initAudioEngine();
+            if (state.playlist.length === 0) {
+                promptAddURL();
+                return;
+            }
+            if (video.paused) {
+                video.play();
+                showCenterAnim('play');
+            } else {
+                video.pause();
+                showCenterAnim('pause');
+            }
+        }
+
+        function updatePlayIcons() {
+            if (state.isPlaying) {
+                playIcon.className = 'fa-solid fa-pause';
+            } else {
+                playIcon.className = 'fa-solid fa-play';
+            }
+        }
+
+        function showCenterAnim(type) {
+            centerPlayIcon.className = type === 'play' ? 'fa-solid fa-play ml-1' : 'fa-solid fa-pause';
+            centerPlayAnim.classList.remove('opacity-0');
+            setTimeout(() => {
+                centerPlayAnim.classList.add('opacity-0');
+            }, 600);
+        }
+
+        function skipTime(seconds) {
+            if (!isNaN(video.duration)) {
+                video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+                showToast(`Skipped ${seconds > 0 ? '+' : ''}${seconds}s`);
+            }
+        }
+
+        // Volume & 300% Boost
+        volumeSlider.addEventListener('input', (e) => {
+            initAudioEngine();
+            const val = parseFloat(e.target.value);
+            if (state.gainNode) {
+                state.gainNode.gain.value = val;
+            } else {
+                video.volume = Math.min(1, val);
+            }
+            volumeLabel.textContent = `${Math.round(val * 100)}%`;
+            if (val === 0) {
+                muteIcon.className = 'fa-solid fa-volume-xmark text-red-400';
+            } else if (val > 1) {
+                muteIcon.className = 'fa-solid fa-volume-high text-pink-400';
+            } else {
+                muteIcon.className = 'fa-solid fa-volume-high';
+            }
+        });
+
+        let previousVolume = 1;
+        function toggleMute() {
+            initAudioEngine();
+            if (video.muted || (state.gainNode && state.gainNode.gain.value === 0)) {
+                video.muted = false;
+                if (state.gainNode) state.gainNode.gain.value = previousVolume;
+                volumeSlider.value = previousVolume;
+                volumeLabel.textContent = `${Math.round(previousVolume * 100)}%`;
+                muteIcon.className = previousVolume > 1 ? 'fa-solid fa-volume-high text-pink-400' : 'fa-solid fa-volume-high';
+            } else {
+                previousVolume = parseFloat(volumeSlider.value);
+                video.muted = true;
+                if (state.gainNode) state.gainNode.gain.value = 0;
+                volumeSlider.value = 0;
+                volumeLabel.textContent = '0%';
+                muteIcon.className = 'fa-solid fa-volume-xmark text-red-400';
+            }
+        }
+
+        function changeSpeed(val) {
+            video.playbackRate = parseFloat(val);
+            showToast(`Playback speed set to ${val}x`);
+        }
+
+        function toggleLoop() {
+            state.isLooping = !state.isLooping;
+            const btn = document.getElementById('loop-btn');
+            if (state.isLooping) {
+                btn.className = 'px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-500 text-cyan-300 transition';
+                showToast('Queue looping enabled');
+            } else {
+                btn.className = 'px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-cyan-300 transition';
+                showToast('Queue looping disabled');
+            }
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('player-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    console.warn('Fullscreen error:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function toggleAppFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Subtitles parser (.srt / .vtt)
+        const subSelector = document.getElementById('sub-selector');
+        subSelector.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                parseSubtitles(evt.target.result);
+                showToast(`Subtitles loaded: ${file.name}`);
+            };
+            reader.readAsText(file);
+        });
+
+        function parseSubtitles(data) {
+            state.subtitles = [];
+            const lines = data.split(/\r?\n/);
+            let currentSub = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (line.includes('-->')) {
+                    const parts = line.split('-->');
+                    currentSub = {
+                        start: parseTimestamp(parts[0].trim()),
+                        end: parseTimestamp(parts[1].trim()),
+                        text: ''
+                    };
+                    i++;
+                    let textLines = [];
+                    while (i < lines.length && lines[i].trim() !== '') {
+                        textLines.push(lines[i].trim());
+                        i++;
+                    }
+                    currentSub.text = textLines.join('<br>');
+                    state.subtitles.push(currentSub);
+                }
+            }
+        }
+
+        function parseTimestamp(timeStr) {
+            const parts = timeStr.split(':');
+            let seconds = 0;
+            if (parts.length === 3) {
+                seconds += parseInt(parts[0]) * 3600;
+                seconds += parseInt(parts[1]) * 60;
+                seconds += parseFloat(parts[2].replace(',', '.'));
+            } else if (parts.length === 2) {
+                seconds += parseInt(parts[0]) * 60;
+                seconds += parseFloat(parts[1].replace(',', '.'));
+            }
+            return seconds;
+        }
+
+        function checkSubtitles(currentTime) {
+            if (state.subtitles.length === 0) return;
+            const active = state.subtitles.find(s => currentTime >= s.start && currentTime <= s.end);
+            if (active) {
+                subtitleDisplay.innerHTML = active.text;
+                subtitleDisplay.classList.remove('hidden');
+            } else {
+                subtitleDisplay.classList.add('hidden');
+            }
+        }
+
+        // Audio Visualizer Canvas Render Loop
+        const audioCanvas = document.getElementById('audio-visualizer-canvas');
+        const audioCtx2D = audioCanvas.getContext('2d');
+        const miniCanvas = document.getElementById('mini-visualizer');
+        const miniCtx2D = miniCanvas.getContext('2d');
+
+        function renderVisualizer() {
+            requestAnimationFrame(renderVisualizer);
+
+
+
+            
+            audioCtx2D.clearRect(0, 0, audioCanvas.width, audioCanvas.height);
+            miniCtx2D.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+
+            if (!state.analyser || !state.isPlaying) {
+                // Draw flat cyber line when paused
+                drawFlatLine(audioCtx2D, audioCanvas.width, audioCanvas.height);
+                drawFlatLine(miniCtx2D, miniCanvas.width, miniCanvas.height);
+                return;
+            }
+
+            const bufferLength = state.analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            state.analyser.getByteFrequencyData(dataArray);
+
+            drawBars(audioCtx2D, audioCanvas.width, audioCanvas.height, dataArray, bufferLength);
+            drawBars(miniCtx2D, miniCanvas.width, miniCanvas.height, dataArray, bufferLength);
+        }
+
+        function drawFlatLine(ctx, w, h) {
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.2)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, h / 2);
+            ctx.lineTo(w, h / 2);
+            ctx.stroke();
+        }
+
+        function drawBars(ctx, w, h, dataArray, bufferLength) {
+            const barWidth = (w / bufferLength) * 2.2;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = (dataArray[i] / 255) * h;
+
+                // Gradient cyber color
+                const gradient = ctx.createLinearGradient(0, h, 0, 0);
+                gradient.addColorStop(0, '#06b6d4');
+                gradient.addColorStop(0.5, '#10b981');
+                gradient.addColorStop(1, '#ec4899');
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, h - barHeight, barWidth - 1, barHeight);
+
+                x += barWidth + 1;
+            }
+        }
+
+        // Library imports share the same queue/playback engine as the original player.
+        document.getElementById('library-file-selector').addEventListener('change', e => { handleFiles(e.target.files); e.target.value=''; });
+        document.getElementById('library-folder-selector').addEventListener('change', e => { handleFiles(e.target.files); e.target.value=''; });
+        document.getElementById('library-search').addEventListener('input', e => { state.librarySearch=e.target.value.toLowerCase().trim(); renderLibrary(); });
+        document.getElementById('library-genre').addEventListener('change', e => { state.libraryGenre=e.target.value; renderLibrary(); });
+        document.getElementById('library-theme').value = state.libraryTheme;
+        applyLibraryTheme(state.libraryTheme);
+        renderLibrary();
+        if (window.homeflixDesktop) {
+            document.getElementById('remote-status').textContent = 'Desktop remote is available. Open Settings to view its pairing address and PIN.';
+            window.homeflixDesktop.getRemoteInfo().then(info => {
+                if (info && info.url) document.getElementById('remote-status').textContent = 'Remote: ' + info.url + ' · PIN: ' + info.pin;
+            }).catch(() => {});
+            window.homeflixDesktop.onRemoteCommand(command => {
+                if (command.action==='toggle') togglePlay();
+                else if (command.action==='play') { video.play().catch(()=>{}); state.isPlaying=true; updatePlayIcons(); }
+                else if (command.action==='pause') { video.pause(); state.isPlaying=false; updatePlayIcons(); }
+                else if (command.action==='seek') video.currentTime=Math.max(0,Math.min(video.duration||0,video.currentTime+(Number(command.value)||0)));
+                else if (command.action==='volume') { video.volume=Math.max(0,Math.min(1,Number(command.value)||0)); volumeSlider.value=video.volume; volumeLabel.textContent=Math.round(video.volume*100)+'%'; }
+                else if (command.action==='mute') toggleMute();
+                else if (command.action==='next') playNext();
+                else if (command.action==='previous') selectQueueItem(Math.max(0,state.currentIndex-1));
+                else if (command.action==='fullscreen') toggleFullscreen();
+                else if (command.action==='status') {
+                    window.homeflixDesktop.sendRemoteStatus({title:currentTitleEl.textContent,playing:!video.paused,currentTime:video.currentTime,duration:video.duration||0,volume:video.volume});
+                }
+            });
+        } else {
+            document.getElementById('remote-status').textContent = 'Website mode: phone remote needs the installed desktop app on the same Wi-Fi network.';
+        }
+
+        requestAnimationFrame(renderVisualizer);
+
+        // CPU & GPU Telemetry Simulator Loop
+        setInterval(() => {
+            const cpu = Math.floor(12 + Math.random() * 18 + (state.isPlaying ? 15 : 0));
+            const gpu = Math.floor(22 + Math.random() * 25 + (state.isPlaying ? 25 : 0));
+            const net = (0.8 + Math.random() * 1.5).toFixed(1);
+
+            document.getElementById('cpu-stat').textContent = `${cpu}%`;
+            document.getElementById('gpu-stat').textContent = `${gpu}%`;
+            document.getElementById('net-stat').textContent = `${net} GB/s`;
+        }, 2000);
+
+        // Keyboard Shortcuts Handler
+        const shortcutsModal = document.getElementById('shortcuts-modal');
+        function toggleShortcutsModal() {
+            shortcutsModal.classList.toggle('hidden');
+        }
+
+        function toggleCRT() {
+            state.isCRTActive = !state.isCRTActive;
+            document.body.classList.toggle('crt-off', !state.isCRTActive);
+            showToast(state.isCRTActive ? 'CRT Scanlines Enabled' : 'CRT Scanlines Disabled');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            // Do not trigger if typing in an input modal
+            if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                togglePlay();
+            } else if (e.code === 'KeyF') {
+                e.preventDefault();
+                toggleFullscreen();
+            } else if (e.code === 'KeyM') {
+                e.preventDefault();
+                toggleMute();
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                skipTime(10);
+            } else if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                skipTime(-10);
+            } else if (e.code === 'ArrowUp') {
+                e.preventDefault();
+                const cur = parseFloat(volumeSlider.value);
+                const next = Math.min(3, cur + 0.1);
+                volumeSlider.value = next;
+                volumeSlider.dispatchEvent(new Event('input'));
+            } else if (e.code === 'ArrowDown') {
+                e.preventDefault();
+                const cur = parseFloat(volumeSlider.value);
+                const next = Math.max(0, cur - 0.1);
+                volumeSlider.value = next;
+                volumeSlider.dispatchEvent(new Event('input'));
+            } else if (e.key === '?') {
+                e.preventDefault();
+                toggleShortcutsModal();
+            }
+        });
+
+        // Toast Helper
+        function showToast(msg) {
+            const toast = document.getElementById('cyber-toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+    </script>
+</body>
+</html>

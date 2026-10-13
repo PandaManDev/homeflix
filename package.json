@@ -1,0 +1,89 @@
+{
+  "name": "homeflix",
+  "version": "4.8.0",
+  "description": "HomeFlix Cyber Node personal media library and desktop player",
+  "main": "electron/main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "make-icon": "node scripts/make-icon.cjs",
+    "dist": "npm run make-icon && electron-builder --win nsis --publish never",
+    "dist:dir": "npm run make-icon && electron-builder --win dir",
+    "dist:linux": "npm run make-icon && electron-builder --linux AppImage deb --x64 --publish never",
+    "deploy:cloudflare": "npx wrangler deploy --config wrangler.jsonc",
+    "preview:cloudflare": "npx wrangler dev --config wrangler.jsonc"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "discord-rpc": "^4.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "electron": "^38.2.0",
+    "electron-builder": "^26.0.12",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.34.4"
+  },
+  "build": {
+    "appId": "com.homeflix.cybernode",
+    "productName": "HomeFlix Cyber Node",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "index.html",
+      "electron/**/*",
+      "build/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/homeflix.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "HomeFlix Cyber Node",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "installerIcon": "build/homeflix.ico",
+      "uninstallerIcon": "build/homeflix.ico",
+      "installerHeaderIcon": "build/homeflix.ico"
+    },
+    "artifactName": "HomeFlix-Cyber-Node-Setup-${version}.${ext}",
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "AudioVideo",
+      "synopsis": "Personal media library and desktop player",
+      "description": "HomeFlix Cyber Node personal media library and desktop player",
+      "icon": "build/icons",
+      "maintainer": "PandaManDev"
+    }
+  }
+}
